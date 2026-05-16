@@ -1,0 +1,99 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Sosie Spotify - {{ artiste.nom }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; gap: 32px; align-items: flex-end; padding: 20px 0 40px 0;">
+    {% if artiste.photo %}
+        <img src="{{ artiste.photo.url }}" alt="{{ artiste.nom }}" style="width: 232px; height: 232px; object-fit: cover; border-radius: 50%; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+    {% else %}
+        <div style="width: 232px; height: 232px; border-radius: 50%; background: #282828; display: flex; align-items: center; justify-content: center; font-size: 5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.5);"><i class="fas fa-microphone" style="color: white;"></i></div>
+    {% endif %}
+    
+    <div>
+        <p style="text-transform: uppercase; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;">Artiste</p>
+        <h1 style="font-size: 4rem; font-weight: 900; margin-bottom: 16px; line-height: 1.2;">{{ artiste.nom }}</h1>
+        <div style="font-size: 0.9rem; color: var(--spotify-muted);">
+            <span>{{ artiste.pays|default:"Pays inconnu" }}</span>
+        </div>
+    </div>
+</div>
+
+{% if artiste.bio %}
+<div style="color: var(--spotify-muted); margin-bottom: 40px; max-width: 800px; line-height: 1.6;">
+    {{ artiste.bio }}
+</div>
+{% endif %}
+
+<h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;">Titres populaires</h2>
+<div style="margin-bottom: 40px;">
+    {% for song in artiste.songs.all|slice:":5" %}
+    <div style="display: flex; align-items: center; padding: 12px 16px; border-radius: 4px; transition: background 0.2s; cursor: pointer; color: var(--spotify-text);"
+         onmouseover="this.style.backgroundColor='rgba(255,255,255,0.1)'"
+         onmouseout="this.style.backgroundColor='transparent'"
+         onclick="playSong('{% if song.fichier_audio %}{{ song.fichier_audio.url }}{% endif %}', '{{ song.titre|escapejs }}', '{{ song.artiste.nom|escapejs }}', {{ song.id }}, '{% if song.album.pochette %}{{ song.album.pochette.url }}{% endif %}')">
+        
+        <div style="width: 40px; text-align: center; color: var(--spotify-muted); font-size: 0.9rem;">
+            <i class="fas fa-play" style="font-size: 0.8rem; opacity: 0;"></i>
+            <span class="track-number">{{ forloop.counter }}</span>
+        </div>
+        
+        {% if song.album.pochette %}
+            <img src="{{ song.album.pochette.url }}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover; margin-right: 16px;">
+        {% else %}
+            <div style="width: 40px; height: 40px; background: #333; border-radius: 4px; margin-right: 16px;"></div>
+        {% endif %}
+        
+        <div style="flex: 1;">
+            <div style="font-weight: 600;">{{ song.titre }}</div>
+        </div>
+
+        <button onclick="event.stopPropagation(); toggleLike({{ song.id }}, this)" style="background:none; border:none; padding:8px; margin-right: 16px; cursor:pointer;">
+            <i class="far fa-heart" style="color: var(--spotify-muted);"></i>
+        </button>
+        
+        <div style="width: 60px; text-align: right; color: var(--spotify-muted); font-size: 0.9rem;">
+            {{ song.get_duree_formatee }}
+        </div>
+    </div>
+    {% empty %}
+    <p style="color: var(--spotify-muted);">Aucune chanson pour cet artiste.</p>
+    {% endfor %}
+</div>
+
+<h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;">Albums</h2>
+<div class="music-grid">
+    {% for album in artiste.albums.all %}
+    <a href="{% url 'music:album_detail' album.id %}" style="text-decoration: none;">
+        <div class="music-card">
+            {% if album.pochette %}
+            <img src="{{ album.pochette.url }}" alt="{{ album.titre }}" class="music-card-img">
+            {% else %}
+            <div class="music-card-img-placeholder"><i class="fas fa-compact-disc"></i></div>
+            {% endif %}
+            <div class="music-card-title">{{ album.titre }}</div>
+            <div class="music-card-subtitle">{{ album.annee_sortie|default:"" }}</div>
+        </div>
+    </a>
+    {% empty %}
+    <p style="color: var(--spotify-muted);">Aucun album.</p>
+    {% endfor %}
+</div>
+
+<style>
+    .track-number { display: inline; }
+    div[onclick]:hover .track-number { display: none; }
+    div[onclick]:hover .fa-play, div[onclick]:hover .fa-pause { opacity: 1 !important; display: inline; }
+    
+    /* Chanson en cours de lecture */
+    div[onclick].playing .track-number { display: none; }
+    div[onclick].playing .fa-play, div[onclick].playing .fa-pause { 
+        opacity: 1 !important; 
+        display: inline; 
+        color: var(--spotify-green); 
+    }
+    div[onclick].playing {
+        color: var(--spotify-green) !important;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Inscription — Sosie Spotify{% endblock %}
+
+{% block content %}
+<div style="min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 40px 0;">
+    <div style="width: 100%; max-width: 460px;">
+
+        <!-- Logo -->
+        <div style="text-align: center; margin-bottom: 32px;">
+            <div style="font-size: 3rem; color: var(--spotify-green); margin-bottom: 12px;">
+                <i class="fa-brands fa-spotify"></i>
+            </div>
+            <h1 style="font-size: 1.8rem; font-weight: 800; margin: 0 0 6px 0;">Créer un compte</h1>
+            <p style="color: var(--spotify-muted); font-size: 0.9rem;">Rejoins Sosie Spotify gratuitement</p>
+        </div>
+
+        <!-- Formulaire -->
+        <form method="post" style="background: #1a1a1a; border-radius: 16px; padding: 32px; display: flex; flex-direction: column; gap: 16px;">
+            {% csrf_token %}
+
+            <!-- Username -->
+            <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--spotify-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                    Nom d'utilisateur *
+                </label>
+                <input type="text" name="username" value="{{ username|default:'' }}" required autofocus
+                       placeholder="Choisis un nom d'utilisateur"
+                       style="width: 100%; box-sizing: border-box; background: #2a2a2a; border: 1px solid {% if errors.username %}#e74c3c{% else %}#3a3a3a{% endif %}; border-radius: 8px;
+                              padding: 12px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.2s;"
+                       onfocus="this.style.borderColor='var(--spotify-green)'"
+                       onblur="this.style.borderColor='#3a3a3a'">
+                {% if errors.username %}
+                <p style="color: #e74c3c; font-size: 0.8rem; margin-top: 4px;">{{ errors.username }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--spotify-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                    Adresse email *
+                </label>
+                <input type="email" name="email" value="{{ email|default:'' }}" required
+                       placeholder="ton@email.com"
+                       style="width: 100%; box-sizing: border-box; background: #2a2a2a; border: 1px solid {% if errors.email %}#e74c3c{% else %}#3a3a3a{% endif %}; border-radius: 8px;
+                              padding: 12px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.2s;"
+                       onfocus="this.style.borderColor='var(--spotify-green)'"
+                       onblur="this.style.borderColor='#3a3a3a'">
+                {% if errors.email %}
+                <p style="color: #e74c3c; font-size: 0.8rem; margin-top: 4px;">{{ errors.email }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Password 1 -->
+            <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--spotify-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                    Mot de passe *
+                </label>
+                <div style="position: relative;">
+                    <input type="password" name="password1" id="pw1" required
+                           placeholder="Minimum 8 caractères"
+                           style="width: 100%; box-sizing: border-box; background: #2a2a2a; border: 1px solid {% if errors.password1 %}#e74c3c{% else %}#3a3a3a{% endif %}; border-radius: 8px;
+                                  padding: 12px 48px 12px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.2s;"
+                           onfocus="this.style.borderColor='var(--spotify-green)'"
+                           onblur="this.style.borderColor='#3a3a3a'"
+                           oninput="checkStrength(this.value)">
+                    <button type="button" onclick="togglePw('pw1','eye1')"
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--spotify-muted); cursor: pointer;">
+                        <i class="fas fa-eye" id="eye1"></i>
+                    </button>
+                </div>
+                <!-- Indicateur force mot de passe -->
+                <div id="strength-bar" style="height: 4px; border-radius: 2px; margin-top: 6px; background: #333; overflow: hidden;">
+                    <div id="strength-fill" style="height: 100%; width: 0; transition: width 0.3s, background 0.3s; border-radius: 2px;"></div>
+                </div>
+                <p id="strength-text" style="font-size: 0.75rem; margin-top: 3px; color: var(--spotify-muted);"></p>
+                {% if errors.password1 %}
+                <p style="color: #e74c3c; font-size: 0.8rem; margin-top: 4px;">{{ errors.password1 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Password 2 -->
+            <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--spotify-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                    Confirmer le mot de passe *
+                </label>
+                <div style="position: relative;">
+                    <input type="password" name="password2" id="pw2" required
+                           placeholder="Répète ton mot de passe"
+                           style="width: 100%; box-sizing: border-box; background: #2a2a2a; border: 1px solid {% if errors.password2 %}#e74c3c{% else %}#3a3a3a{% endif %}; border-radius: 8px;
+                                  padding: 12px 48px 12px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.2s;"
+                           onfocus="this.style.borderColor='var(--spotify-green)'"
+                           onblur="this.style.borderColor='#3a3a3a'">
+                    <button type="button" onclick="togglePw('pw2','eye2')"
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--spotify-muted); cursor: pointer;">
+                        <i class="fas fa-eye" id="eye2"></i>
+                    </button>
+                </div>
+                {% if errors.password2 %}
+                <p style="color: #e74c3c; font-size: 0.8rem; margin-top: 4px;">{{ errors.password2 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Submit -->
+            <button type="submit"
+                    style="width: 100%; padding: 14px; background: var(--spotify-green); color: #000; border: none;
+                           border-radius: 50px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px;
+                           transition: transform 0.1s, background 0.2s;"
+                    onmouseover="this.style.transform='scale(1.02)'; this.style.background='#1ed760';"
+                    onmouseout="this.style.transform='scale(1)'; this.style.background='var(--spotify-green)';">
+                Créer mon compte
+            </button>
+        </form>
+
+        <!-- Lien connexion -->
+        <p style="text-align: center; margin-top: 20px; color: var(--spotify-muted); font-size: 0.9rem;">
+            Déjà un compte ?
+            <a href="{% url 'users:login' %}" style="color: #fff; font-weight: 600; text-decoration: none;"
+               onmouseover="this.style.color='var(--spotify-green)'" onmouseout="this.style.color='#fff'">
+                Se connecter
+            </a>
+        </p>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function togglePw(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    input.type = input.type === 'password' ? 'text' : 'password';
+    icon.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+}
+
+function checkStrength(password) {
+    const fill = document.getElementById('strength-fill');
+    const text = document.getElementById('strength-text');
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    const levels = [
+        { pct: '0%',   color: '#e74c3c', label: '' },
+        { pct: '25%',  color: '#e74c3c', label: '🔴 Très faible' },
+        { pct: '50%',  color: '#f39c12', label: '🟠 Faible' },
+        { pct: '75%',  color: '#3498db', label: '🔵 Moyen' },
+        { pct: '100%', color: '#1db954', label: '🟢 Fort' },
+    ];
+    const l = levels[score];
+    fill.style.width    = l.pct;
+    fill.style.background = l.color;
+    text.textContent    = l.label;
+    text.style.color    = l.color;
+}
+</script>
+{% endblock %}
+
+{% endblock %}

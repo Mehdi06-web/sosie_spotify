@@ -1,0 +1,117 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Créer une playlist — Sosie Spotify{% endblock %}
+
+{% block content %}
+
+<div style="min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 40px 0;">
+    <div style="width: 100%; max-width: 520px;">
+
+        <!-- Header -->
+        <div style="margin-bottom: 32px;">
+            <a href="{% url 'playlists:playlist_list' %}"
+               style="color: var(--spotify-muted); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 20px;"
+               onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--spotify-muted)'">
+                <i class="fas fa-arrow-left"></i> Retour aux playlists
+            </a>
+            <h1 style="font-size: 2rem; font-weight: 800; margin: 0 0 6px 0;">
+                <i class="fas fa-plus-circle" style="color: var(--spotify-green); margin-right: 10px;"></i>
+                Créer une playlist
+            </h1>
+            <p style="color: var(--spotify-muted);">Organise ta musique comme tu le souhaites</p>
+        </div>
+
+        <!-- Formulaire -->
+        <form method="post" style="background: #1a1a1a; border-radius: 16px; padding: 32px; display: flex; flex-direction: column; gap: 20px;">
+            {% csrf_token %}
+
+            <!-- Nom -->
+            <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;
+                              color: var(--spotify-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                    Nom de la playlist *
+                </label>
+                <input type="text" name="nom" value="{{ nom|default:'' }}" required
+                       placeholder="Ma super playlist..."
+                       maxlength="200"
+                       style="width: 100%; box-sizing: border-box; background: #2a2a2a; border: 1px solid #3a3a3a;
+                              border-radius: 8px; padding: 12px 16px; color: #fff; font-size: 1rem; outline: none;
+                              transition: border-color 0.2s;"
+                       onfocus="this.style.borderColor='var(--spotify-green)'"
+                       onblur="this.style.borderColor='#3a3a3a'">
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;
+                              color: var(--spotify-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                    Description <span style="font-weight: 400; text-transform: none;">(optionnel)</span>
+                </label>
+                <textarea name="description" rows="3"
+                          placeholder="Décris ta playlist..."
+                          style="width: 100%; box-sizing: border-box; background: #2a2a2a; border: 1px solid #3a3a3a;
+                                 border-radius: 8px; padding: 12px 16px; color: #fff; font-size: 1rem; outline: none;
+                                 resize: vertical; font-family: inherit; transition: border-color 0.2s;"
+                          onfocus="this.style.borderColor='var(--spotify-green)'"
+                          onblur="this.style.borderColor='#3a3a3a'">{{ description|default:'' }}</textarea>
+            </div>
+
+            <!-- Visibilité -->
+            <div>
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                    <div style="position: relative; width: 48px; height: 26px;">
+                        <input type="checkbox" name="est_publique" id="est_publique" checked
+                               style="position: absolute; opacity: 0; width: 0; height: 0;"
+                               onchange="updateToggle(this)">
+                        <div id="toggle-bg" style="position: absolute; inset: 0; background: var(--spotify-green);
+                                                   border-radius: 13px; transition: background 0.2s;"></div>
+                        <div id="toggle-knob" style="position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+                                                      background: #fff; border-radius: 50%; transition: transform 0.2s;
+                                                      transform: translateX(22px);"></div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;" id="toggle-label">Playlist publique</div>
+                        <div style="color: var(--spotify-muted); font-size: 0.8rem;" id="toggle-desc">
+                            Visible par tous les utilisateurs
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit"
+                    style="width: 100%; padding: 14px; background: var(--spotify-green); color: #000; border: none;
+                           border-radius: 50px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 4px;
+                           transition: transform 0.1s, background 0.2s;"
+                    onmouseover="this.style.transform='scale(1.02)'; this.style.background='#1ed760';"
+                    onmouseout="this.style.transform='scale(1)'; this.style.background='var(--spotify-green)';">
+                <i class="fas fa-plus" style="margin-right: 8px;"></i>Créer la playlist
+            </button>
+        </form>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function updateToggle(checkbox) {
+    const bg    = document.getElementById('toggle-bg');
+    const knob  = document.getElementById('toggle-knob');
+    const label = document.getElementById('toggle-label');
+    const desc  = document.getElementById('toggle-desc');
+
+    if (checkbox.checked) {
+        bg.style.background         = 'var(--spotify-green)';
+        knob.style.transform        = 'translateX(22px)';
+        label.textContent           = 'Playlist publique';
+        desc.textContent            = 'Visible par tous les utilisateurs';
+    } else {
+        bg.style.background         = '#555';
+        knob.style.transform        = 'translateX(0)';
+        label.textContent           = 'Playlist privée';
+        desc.textContent            = 'Seulement visible par toi';
+    }
+}
+</script>
+{% endblock %}
+
+{% endblock %}

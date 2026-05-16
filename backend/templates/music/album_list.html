@@ -1,0 +1,50 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Sosie Spotify - Albums{% endblock %}
+
+{% block content %}
+
+<div style="padding: 20px 0 30px 0;">
+    <h1 class="section-title">
+        <i class="fas fa-compact-disc" style="color: var(--spotify-green);"></i>
+        Albums
+    </h1>
+    <p style="color: var(--spotify-muted);">{{ albums|length }} album{{ albums|length|pluralize }} dans le catalogue</p>
+</div>
+
+<div class="music-grid">
+    {% for album in albums %}
+    <a href="{% url 'music:album_detail' album.id %}" style="text-decoration: none;">
+    <div class="music-card">
+        <!-- Pochette -->
+        {% if album.pochette %}
+        <img src="{{ album.pochette.url }}" alt="{{ album.titre }}"
+             class="music-card-img"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="music-card-img-placeholder" style="display:none;"><i class="fas fa-compact-disc"></i></div>
+        {% else %}
+        <div class="music-card-img-placeholder"><i class="fas fa-compact-disc"></i></div>
+        {% endif %}
+
+        <div class="music-card-title">{{ album.titre }}</div>
+        <div class="music-card-subtitle">{{ album.artiste.nom }}</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <span style="color: var(--spotify-muted); font-size: 0.75rem;">
+                <i class="fas fa-music" style="margin-right: 4px;"></i>{{ album.songs.count }} titre{{ album.songs.count|pluralize }}
+            </span>
+            {% if album.annee_sortie %}
+            <span style="color: var(--spotify-muted); font-size: 0.75rem;">{{ album.annee_sortie }}</span>
+            {% endif %}
+        </div>
+    </div>
+    </a>
+    {% empty %}
+    <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--spotify-muted);">
+        <i class="fas fa-compact-disc" style="font-size: 3rem; margin-bottom: 16px; display: block;"></i>
+        <p>Aucun album disponible.</p>
+        <p style="font-size: 0.85rem; margin-top: 8px;">Lance <code>python manage.py fake_data</code> pour générer des données.</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

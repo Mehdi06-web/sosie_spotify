@@ -1,0 +1,113 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Playlists — Sosie Spotify{% endblock %}
+
+{% block content %}
+
+<div style="padding: 20px 0 30px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div>
+        <h1 class="section-title">
+            <i class="fas fa-list-music" style="color: var(--spotify-green);"></i>
+            Playlists
+        </h1>
+        <p style="color: var(--spotify-muted);">Découvre et crée des playlists musicales</p>
+    </div>
+    {% if user.is_authenticated %}
+    <a href="{% url 'playlists:playlist_create' %}"
+       style="padding: 12px 24px; background: var(--spotify-green); color: #000; border-radius: 50px;
+              font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 8px;
+              transition: transform 0.1s, background 0.2s; white-space: nowrap;"
+       onmouseover="this.style.transform='scale(1.03)'; this.style.background='#1ed760';"
+       onmouseout="this.style.transform='scale(1)'; this.style.background='var(--spotify-green)';">
+        <i class="fas fa-plus"></i> Créer une playlist
+    </a>
+    {% endif %}
+</div>
+
+<!-- Mes playlists -->
+{% if user.is_authenticated and mes_playlists %}
+<div style="margin-bottom: 48px;">
+    <h2 class="section-title" style="font-size: 1.3rem;"><i class="fas fa-list"></i> Mes playlists</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+        {% for pl in mes_playlists %}
+        <a href="{% url 'playlists:playlist_detail' pl.pk %}" style="text-decoration: none;">
+            <div style="background: #1a1a1a; border-radius: 12px; padding: 16px; cursor: pointer;
+                        transition: background 0.2s, transform 0.2s; position: relative;"
+                 onmouseover="this.style.background='#2a2a2a'; this.style.transform='translateY(-4px)';"
+                 onmouseout="this.style.background='#1a1a1a'; this.style.transform='translateY(0)';">
+
+                <!-- Icône -->
+                <div style="width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #1db954 0%, #0a4a20 100%);
+                            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+                            font-size: 3rem; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+                    {% if pl.pochette %}
+                    <img src="{{ pl.pochette.url }}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                    {% else %}
+                    <i class="fas fa-list" style="color: #b3b3b3;"></i>
+                    {% endif %}
+                </div>
+
+                <div style="font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff;">
+                    {{ pl.nom }}
+                </div>
+                <div style="color: var(--spotify-muted); font-size: 0.8rem;">
+                    {{ pl.nb_chansons }} titre{{ pl.nb_chansons|pluralize }}
+                    {% if not pl.est_publique %}
+                    · <i class="fas fa-lock" style="font-size: 0.7rem;"></i> Privée
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Playlists publiques -->
+<div>
+    <h2 class="section-title" style="font-size: 1.3rem;">🌍 Playlists publiques</h2>
+    {% if playlists_publiques %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+        {% for pl in playlists_publiques %}
+        <a href="{% url 'playlists:playlist_detail' pl.pk %}" style="text-decoration: none;">
+            <div style="background: #1a1a1a; border-radius: 12px; padding: 16px; cursor: pointer;
+                        transition: background 0.2s, transform 0.2s;"
+                 onmouseover="this.style.background='#2a2a2a'; this.style.transform='translateY(-4px)';"
+                 onmouseout="this.style.background='#1a1a1a'; this.style.transform='translateY(0)';">
+
+                <div style="width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #3b1f5e 0%, #1a0a30 100%);
+                            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+                            font-size: 3rem; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+                    {% if pl.pochette %}
+                    <img src="{{ pl.pochette.url }}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                    {% else %}
+                    <i class="fas fa-music" style="color: #b3b3b3;"></i>
+                    {% endif %}
+                </div>
+
+                <div style="font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff;">
+                    {{ pl.nom }}
+                </div>
+                <div style="color: var(--spotify-muted); font-size: 0.8rem;">
+                    Par {{ pl.utilisateur.username }} · {{ pl.nb_chansons }} titre{{ pl.nb_chansons|pluralize }}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 60px; color: var(--spotify-muted);">
+        <i class="fas fa-music" style="font-size: 3rem; margin-bottom: 16px; display: block;"></i>
+        <p>Aucune playlist publique pour le moment.</p>
+        {% if user.is_authenticated %}
+        <a href="{% url 'playlists:playlist_create' %}"
+           style="display: inline-block; margin-top: 16px; padding: 10px 24px; background: var(--spotify-green);
+                  color: #000; border-radius: 50px; font-weight: 700; text-decoration: none;">
+            Créer la première playlist
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

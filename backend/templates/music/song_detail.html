@@ -1,0 +1,99 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ song.titre }} — {{ song.artiste.nom }}{% endblock %}
+
+{% block content %}
+
+<div style="display: grid; grid-template-columns: 280px 1fr; gap: 40px; padding: 30px 0; align-items: start;">
+
+    <!-- Pochette -->
+    <div>
+        {% if song.album and song.album.pochette %}
+        <img src="{{ song.album.pochette.url }}" alt="{{ song.titre }}"
+             style="width: 100%; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+        {% else %}
+        <div style="width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #1db954 0%, #191414 100%);
+                    border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 5rem;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.5);"><i class="fas fa-music" style="color: #b3b3b3;"></i></div>
+        {% endif %}
+
+        <!-- Bouton play rapide -->
+        <button onclick="playSong('{% if song.fichier_audio %}{{ song.fichier_audio.url }}{% endif %}', '{{ song.titre|escapejs }}', '{{ song.artiste.nom|escapejs }}', {{ song.id }}, '{% if song.album and song.album.pochette %}{{ song.album.pochette.url }}{% endif %}')"
+                style="width: 100%; margin-top: 16px; padding: 14px; background: var(--spotify-green); color: #000;
+                       border: none; border-radius: 50px; font-size: 1rem; font-weight: 700; cursor: pointer;
+                       display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.1s;"
+                onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+            <i class="fas fa-play"></i> Écouter
+        </button>
+    </div>
+
+    <!-- Infos -->
+    <div>
+        <div style="color: var(--spotify-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+            Chanson
+        </div>
+        <h1 style="font-size: 3rem; font-weight: 800; margin: 0 0 12px 0; line-height: 1.1;">{{ song.titre }}</h1>
+
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 30px; flex-wrap: wrap;">
+            <a href="{% url 'music:artiste_list' %}"
+               style="color: #fff; font-weight: 700; text-decoration: none; font-size: 1.1rem;"
+               onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                {{ song.artiste.nom }}
+            </a>
+            {% if song.album %}
+            <span style="color: var(--spotify-muted);">•</span>
+            <a href="{% url 'music:album_list' %}"
+               style="color: var(--spotify-muted); text-decoration: none;"
+               onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--spotify-muted)'">
+                {{ song.album.titre }}
+            </a>
+            {% if song.album.annee_sortie %}
+            <span style="color: var(--spotify-muted);">• {{ song.album.annee_sortie }}</span>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- Badges infos -->
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 30px;">
+            {% if song.genre %}
+            <span class="badge-genre" style="font-size: 0.9rem; padding: 6px 14px;">
+                <i class="fas fa-tag" style="margin-right: 6px;"></i>{{ song.genre.nom }}
+            </span>
+            {% endif %}
+            <span style="background: #333; padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; color: var(--spotify-muted);">
+                <i class="fas fa-clock" style="margin-right: 6px;"></i>{{ song.get_duree_formatee }}
+            </span>
+            <span style="background: #333; padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; color: var(--spotify-muted);">
+                <i class="fas fa-headphones" style="margin-right: 6px;"></i>{{ song.nb_ecoutes|floatformat:0 }} écoutes
+            </span>
+        </div>
+
+        <!-- Retour catalogue -->
+        <a href="{% url 'music:music_list' %}"
+           style="display: inline-flex; align-items: center; gap: 8px; color: var(--spotify-muted); text-decoration: none; font-size: 0.9rem;"
+           onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--spotify-muted)'">
+            <i class="fas fa-arrow-left"></i> Retour au catalogue
+        </a>
+    </div>
+</div>
+
+<!-- Chansons similaires -->
+{% if songs_similaires %}
+<div style="margin-top: 40px;">
+    <h2 class="section-title"><i class="fas fa-microphone"></i> Autres titres de {{ song.artiste.nom }}</h2>
+    <div class="music-grid">
+        {% for s in songs_similaires %}
+        <div class="music-card" onclick="playSong('{% if s.fichier_audio %}{{ s.fichier_audio.url }}{% endif %}', '{{ s.titre|escapejs }}', '{{ s.artiste.nom|escapejs }}', {{ s.id }}, '{% if s.album and s.album.pochette %}{{ s.album.pochette.url }}{% endif %}')">
+            <div class="music-card-img-placeholder"><i class="fas fa-music"></i></div>
+            <div class="music-card-title">{{ s.titre }}</div>
+            <div class="music-card-subtitle">{{ s.artiste.nom }}</div>
+            {% if s.genre %}<span class="badge-genre">{{ s.genre.nom }}</span>{% endif %}
+            <span style="color: var(--spotify-muted); font-size: 0.75rem; display: block; margin-top: 6px;">{{ s.get_duree_formatee }}</span>
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

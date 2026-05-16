@@ -1,0 +1,17 @@
+{
+  "name": "Sosie Spotify",
+  "short_name": "Spotify Clone",
+  "description": "Une application de streaming musical.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#1DB954",
+  "icons": [
+    {
+      "src": "/static/logo.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

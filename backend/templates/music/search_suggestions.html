@@ -1,0 +1,60 @@
+{% if songs or artistes %}
+<div style="background: #282828; border-radius: 8px; padding: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); max-height: 400px; overflow-y: auto;">
+    
+    {% if songs %}
+    <div style="margin-bottom: 12px;">
+        <div style="font-size: 0.8rem; color: #b3b3b3; margin-bottom: 8px; text-transform: uppercase; font-weight: 700; padding-left: 8px;">Titres</div>
+        {% for song in songs %}
+        <div style="display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 4px; cursor: pointer; transition: background 0.2s;" 
+             onmouseover="this.style.background='#3e3e3e'" 
+             onmouseout="this.style.background='transparent'" 
+             onclick="playSong('{% if song.fichier_audio %}{{ song.fichier_audio.url }}{% endif %}', '{{ song.titre|escapejs }}', '{{ song.artiste.nom|escapejs }}', {{ song.id }}, '{% if song.album and song.album.pochette %}{{ song.album.pochette.url }}{% elif song.pochette %}{{ song.pochette.url }}{% endif %}'); document.getElementById('search-suggestions-container').innerHTML='';">
+            
+            {% if song.pochette %}
+            <img src="{{ song.pochette.url }}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;">
+            {% elif song.album and song.album.pochette %}
+            <img src="{{ song.album.pochette.url }}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;">
+            {% else %}
+            <div style="width: 40px; height: 40px; background: #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px;"><i class="fas fa-music" style="color: #b3b3b3;"></i></div>
+            {% endif %}
+            
+            <div style="overflow: hidden;">
+                <div style="color: #fff; font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ song.titre }}</div>
+                <div style="color: #b3b3b3; font-size: 0.85rem;">{{ song.artiste.nom }}</div>
+            </div>
+            
+            <i class="fas fa-play" style="margin-left: auto; color: #b3b3b3; font-size: 0.8rem; padding-right: 8px;"></i>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if artistes %}
+    <div style="margin-bottom: 8px;">
+        <div style="font-size: 0.8rem; color: #b3b3b3; margin-bottom: 8px; text-transform: uppercase; font-weight: 700; padding-left: 8px;">Artistes</div>
+        {% for artiste in artistes %}
+        <a href="{% url 'music:artiste_detail' artiste.id %}" onclick="document.getElementById('search-suggestions-container').innerHTML='';" 
+           style="text-decoration: none; display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 4px; transition: background 0.2s;" 
+           onmouseover="this.style.background='#3e3e3e'" 
+           onmouseout="this.style.background='transparent'">
+            
+            {% if artiste.photo %}
+            <img src="{{ artiste.photo.url }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+            {% else %}
+            <div style="width: 40px; height: 40px; background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;"><i class="fas fa-microphone" style="color: #b3b3b3;"></i></div>
+            {% endif %}
+            
+            <div style="color: #fff; font-size: 0.95rem; font-weight: 600;">{{ artiste.nom }}</div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+{% else %}
+    {% if query|length >= 2 %}
+    <div style="background: #282828; border-radius: 8px; padding: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); text-align: center; color: #b3b3b3;">
+        Aucun résultat pour "{{ query }}"
+    </div>
+    {% endif %}
+{% endif %}

@@ -1,0 +1,59 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Ma Bibliothèque — Sosie Spotify{% endblock %}
+
+{% block content %}
+
+<div style="padding: 20px 0;">
+    <h1 class="section-title">
+        <i class="fas fa-book-open" style="color: var(--spotify-green);"></i>
+        Ma Bibliothèque
+    </h1>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; margin-top: 30px;">
+        
+        <!-- Tuile Titres Likés -->
+        <a href="{% url 'player:liked_songs' %}" style="text-decoration: none;">
+            <div style="background: linear-gradient(135deg, #450af5, #c4efd9); height: 220px; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; position: relative; overflow: hidden; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="flex: 1; margin-bottom: 12px;">
+                    <p style="color: #fff; font-size: 1rem; font-weight: 500; margin: 0; line-height: 1.4;">
+                        Parcours et écoute tous les titres que tu as aimés.
+                    </p>
+                </div>
+                <h2 style="color: #fff; font-size: 2rem; font-weight: 800; margin: 0 0 4px 0;">Titres likés</h2>
+                <p style="color: #fff; font-size: 1rem; font-weight: 500; margin: 0;">{{ nb_likes }} titre{{ nb_likes|pluralize }}</p>
+                <i class="fas fa-heart" style="position: absolute; bottom: 20px; right: 20px; font-size: 4rem; color: rgba(255,255,255,0.2);"></i>
+            </div>
+        </a>
+
+        <!-- Mes playlists -->
+        {% for pl in mes_playlists %}
+        <a href="{% url 'playlists:playlist_detail' pl.pk %}" style="text-decoration: none;">
+            <div style="background: #1a1a1a; height: 220px; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.transform='scale(1.02)'; this.style.background='#2a2a2a'" onmouseout="this.style.transform='scale(1)'; this.style.background='#1a1a1a'">
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #3b1f5e, #1a0a30); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                    {% if pl.pochette %}
+                    <img src="{{ pl.pochette.url }}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                    {% else %}
+                    <i class="fas fa-list" style="color: #b3b3b3;"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 style="color: #fff; font-size: 1.2rem; font-weight: 700; margin: 0 0 6px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ pl.nom }}</h3>
+                    <p style="color: var(--spotify-muted); font-size: 0.9rem; margin: 0;">{{ pl.nb_chansons }} titre{{ pl.nb_chansons|pluralize }}</p>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+
+        <!-- Créer une playlist (Bouton d'ajout) -->
+        <a href="{% url 'playlists:playlist_create' %}" style="text-decoration: none;">
+            <div style="background: transparent; border: 2px dashed #444; height: 220px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: border-color 0.2s, background 0.2s;" onmouseover="this.style.borderColor='var(--spotify-green)'; this.style.background='rgba(29, 185, 84, 0.05)'" onmouseout="this.style.borderColor='#444'; this.style.background='transparent'">
+                <i class="fas fa-plus-circle" style="color: var(--spotify-muted); font-size: 3rem; margin-bottom: 16px;"></i>
+                <h3 style="color: var(--spotify-muted); font-size: 1.1rem; font-weight: 700; margin: 0;">Créer une playlist</h3>
+            </div>
+        </a>
+
+    </div>
+</div>
+
+{% endblock %}

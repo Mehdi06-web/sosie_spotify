@@ -1,0 +1,666 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sosie Spotify{% endblock %}</title>
+    
+    <!-- PWA Manifest & Meta -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#1DB954">
+    <link rel="apple-touch-icon" href="{% static 'logo.svg' %}">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- HTMX pour une navigation sans coupure audio -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- CSS Personnalisé -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Style personnalisé -->
+    <link rel="stylesheet" href="{% static 'base/css/style.css' %}?v=1.1">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body hx-boost="true">
+
+<!-- Messages Django -->
+{% if messages %}
+<div class="django-messages">
+    {% for message in messages %}
+    <div class="django-message msg-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Layout principal -->
+<div class="app-layout">
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="sidebar">
+        <!-- Logo -->
+        <a href="{% url 'base:home' %}" class="sidebar-logo">
+            <span class="logo-icon"><i class="fa-brands fa-spotify"></i></span>
+            <span>Sosie Spotify</span>
+        </a>
+
+        <!-- Navigation principale -->
+        <div class="sidebar-section">
+            <a href="{% url 'base:home' %}" class="sidebar-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>Accueil</span>
+            </a>
+            <a href="{% url 'music:search' %}" class="sidebar-link {% if request.resolver_match.url_name == 'search' %}active{% endif %}">
+                <i class="fas fa-search"></i>
+                <span>Rechercher</span>
+            </a>
+            <a href="{% if user.is_authenticated %}{% url 'playlists:library' %}{% else %}{% url 'users:login' %}{% endif %}" class="sidebar-link {% if request.resolver_match.url_name == 'library' %}active{% endif %}">
+                <i class="fas fa-book-open"></i>
+                <span>Ma bibliothèque</span>
+            </a>
+        </div>
+
+        <!-- Musique -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Musique</div>
+            <a href="{% url 'music:music_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'music_list' %}active{% endif %}">
+                <i class="fas fa-music"></i>
+                <span>Catalogue</span>
+            </a>
+            <a href="{% url 'music:artiste_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'artiste_list' %}active{% endif %}">
+                <i class="fas fa-microphone"></i>
+                <span>Artistes</span>
+            </a>
+            <a href="{% url 'music:album_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'album_list' %}active{% endif %}">
+                <i class="fas fa-compact-disc"></i>
+                <span>Albums</span>
+            </a>
+        </div>
+
+        <!-- Playlists -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Playlists</div>
+            <a href="{% url 'playlists:playlist_list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'playlists' %}active{% endif %}">
+                <i class="fas fa-list-music"></i>
+                <span>Parcourir</span>
+            </a>
+            <a href="{% if user.is_authenticated %}{% url 'playlists:playlist_create' %}{% else %}{% url 'users:login' %}{% endif %}" class="sidebar-link">
+                <i class="fas fa-plus-circle"></i>
+                <span>Créer une playlist</span>
+            </a>
+            <a href="{% if user.is_authenticated %}{% url 'player:liked_songs' %}{% else %}{% url 'users:login' %}{% endif %}" class="sidebar-link {% if request.resolver_match.url_name == 'liked_songs' %}active{% endif %}">
+                <i class="fas fa-heart" style="color:#e91e63;"></i>
+                <span>Titres likés</span>
+            </a>
+        </div>
+
+        <!-- Compte -->
+        <div class="sidebar-section" style="margin-top:auto;">
+            <div class="sidebar-section-title">Compte</div>
+            {% if user.is_authenticated %}
+            <a href="{% url 'users:profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ user.username }}</span>
+            </a>
+            <form method="post" action="{% url 'users:logout' %}" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="sidebar-link" style="width:100%; background:none; border:none; cursor:pointer; text-align:left;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Déconnexion</span>
+                </button>
+            </form>
+            {% else %}
+            <a href="{% url 'users:login' %}" class="sidebar-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Connexion</span>
+            </a>
+            <a href="{% url 'users:register' %}" class="sidebar-link {% if request.resolver_match.url_name == 'register' %}active{% endif %}">
+                <i class="fas fa-user-plus"></i>
+                <span>Inscription</span>
+            </a>
+            {% endif %}
+        </div>
+    </aside>
+
+    <!-- ========== CONTENU PRINCIPAL ========== -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-nav">
+                <button onclick="history.back()"><i class="fas fa-chevron-left"></i></button>
+                <button onclick="history.forward()"><i class="fas fa-chevron-right"></i></button>
+            </div>
+
+            <!-- Barre de recherche globale avec Autocomplete HTMX -->
+            <div class="topbar-search" style="flex: 1; max-width: 400px; margin-left: 20px; position: relative;">
+                <form method="get" action="{% url 'music:search' %}" style="display: flex; position: relative; margin: 0;">
+                    <i class="fas fa-search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #000;"></i>
+                    <input type="text" name="q" placeholder="Que souhaites-tu écouter ?" value="{{ request.GET.q }}"
+                           autocomplete="off"
+                           hx-get="{% url 'music:search_suggestions' %}"
+                           hx-trigger="keyup changed delay:300ms, search"
+                           hx-target="#search-suggestions-container"
+                           style="width: 100%; border-radius: 50px; padding: 12px 20px 12px 48px; border: none; outline: none; font-weight: 500; font-size: 1rem;">
+                </form>
+                <!-- Conteneur des suggestions HTMX -->
+                <div id="search-suggestions-container" style="position: absolute; top: 100%; left: 0; width: 100%; z-index: 1000; margin-top: 8px;"></div>
+            </div>
+            <div class="topbar-user">
+                {% if user.is_authenticated %}
+                <a href="{% url 'users:profile' %}" class="btn-login">
+                    <i class="fas fa-user"></i> {{ user.username }}
+                </a>
+                {% else %}
+                <a href="{% url 'users:register' %}" class="btn-signup">Inscription</a>
+                <a href="{% url 'users:login' %}" class="btn-login">Connexion</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Contenu de la page -->
+        <div class="content-area">
+            {% block content %}
+            {% endblock %}
+              <!-- Espace vide pour ne pas cacher le contenu avec le player fixe -->
+    <div style="height: 100px;"></div>
+        </div>
+    </main>
+
+    <!-- ========== PLAYER BAS DE PAGE ========== -->
+    <div class="player-bar" id="global-player-container" hx-preserve="true">
+        <!-- Info chanson -->
+            <div class="player-song-info">
+                <div class="player-thumb" id="player-thumb"><i class="fas fa-music" style="color: #b3b3b3;"></i></div>
+                <div style="min-width: 0; flex: 1;">
+                    <div class="player-song-title" id="player-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Sélectionner une chanson</div>
+                    <div class="player-song-artist" id="player-artist" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">—</div>
+                </div>
+                <button onclick="toggleCurrentSongLike()" id="player-like-btn" style="background:none; border:none; color:var(--spotify-muted); cursor:pointer; font-size:1.1rem; display:none;">
+                    <i class="far fa-heart" id="player-heart-icon"></i>
+                </button>
+            </div>
+
+            <!-- Contrôles -->
+            <div class="player-controls">
+                <div class="player-buttons">
+                    <button class="player-btn" id="shuffle-btn" onclick="toggleShuffle()"><i class="fas fa-random"></i></button>
+                    <button class="player-btn" onclick="playPrev()"><i class="fas fa-step-backward"></i></button>
+                    <button class="player-play-btn" id="play-btn" onclick="togglePlay()">
+                        <i class="fas fa-play" id="play-icon"></i>
+                    </button>
+                    <button class="player-btn" onclick="playNext()"><i class="fas fa-step-forward"></i></button>
+                    <button class="player-btn" id="repeat-btn" onclick="toggleRepeat()"><i class="fas fa-redo"></i></button>
+                </div>
+                <div class="player-progress">
+                    <span class="player-time" id="current-time">0:00</span>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progress-fill"></div>
+                    </div>
+                    <span class="player-time" id="total-time">0:00</span>
+                </div>
+            </div>
+
+            <!-- Volume -->
+            <div class="player-volume">
+                <button class="player-btn" onclick="toggleMute()"><i class="fas fa-volume-up" id="volume-icon"></i></button>
+                <div class="volume-bar" id="volume-bar-container">
+                    <div class="volume-fill" id="volume-fill"></div>
+                </div>
+            </div>
+    </div>
+
+    <!-- ========== MOBILE NAV ========== -->
+    <nav class="mobile-nav">
+        <a href="{% url 'base:home' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+            <i class="fas fa-home"></i>
+            <span>Accueil</span>
+        </a>
+        <a href="{% url 'music:search' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'search' %}active{% endif %}">
+            <i class="fas fa-search"></i>
+            <span>Recherche</span>
+        </a>
+        <a href="{% if user.is_authenticated %}{% url 'playlists:library' %}{% else %}{% url 'users:login' %}{% endif %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'library' %}active{% endif %}">
+            <i class="fas fa-book-open"></i>
+            <span>Bibliothèque</span>
+        </a>
+    </nav>
+
+</div>
+
+<!-- Audio player caché -->
+<audio id="audio-player" style="display:none;"></audio>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Player JS complet -->
+<script id="global-player-script" hx-preserve="true">
+    let isPlaying = false;
+    let currentSongId = null;
+    let hasCountedPlay = false; // Pour ne pas compter 2 fois la même écoute
+    let currentPlayingElement = null; // Élément du DOM en cours de lecture
+    
+    const audio = document.getElementById('audio-player');
+    const playBtn = document.getElementById('play-btn');
+    const playIcon = document.getElementById('play-icon');
+    const likeBtn = document.getElementById('player-like-btn');
+    const heartIcon = document.getElementById('player-heart-icon');
+
+    // Init Volume
+    const volumeContainer = document.getElementById('volume-bar-container');
+    const volumeFill = document.getElementById('volume-fill');
+    const volumeIcon = document.getElementById('volume-icon');
+    let lastVolume = 1;
+    audio.volume = 1;
+    if (volumeFill) volumeFill.style.width = '100%';
+
+    // Récupérer le CSRF token pour les requêtes POST Fetch
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    function togglePlay() {
+        if (!audio.src || audio.src === window.location.href) {
+            // Si aucune musique n'est chargée, on lance la première dispo sur la page
+            const firstSong = document.querySelector('[onclick^="playSong"]');
+            if (firstSong) {
+                firstSong.click();
+            } else {
+                alert("Veuillez d'abord sélectionner une chanson.");
+            }
+            return;
+        }
+        
+        if (isPlaying) {
+            audio.pause();
+            playIcon.className = 'fas fa-play';
+            if (currentPlayingElement) {
+                let i = currentPlayingElement.querySelector('.fa-pause');
+                if (i) i.className = 'fas fa-play';
+            }
+        } else {
+            audio.play();
+            playIcon.className = 'fas fa-pause';
+            if (currentPlayingElement) {
+                let i = currentPlayingElement.querySelector('.fa-play');
+                if (i) i.className = 'fas fa-pause';
+            }
+        }
+        isPlaying = !isPlaying;
+    }
+
+    let currentObjectUrl = null;
+
+    function playSong(src, title, artist, songId = null, coverUrl = null) {
+        if (!src) {
+            alert('Alerte: Fichier audio introuvable pour ce titre.');
+            return;
+        }
+
+        // Si on clique sur la même chanson qui est déjà chargée, on fait juste pause/play !
+        if (currentSongId === songId && songId !== null) {
+            togglePlay();
+            return;
+        }
+
+        // Remettre tous les boutons play à "play" et enlever la classe "playing"
+        document.querySelectorAll('.fa-pause').forEach(icon => {
+            if (icon !== playIcon) icon.className = 'fas fa-play'; 
+        });
+        document.querySelectorAll('.playing').forEach(el => el.classList.remove('playing'));
+
+        // Sauvegarder l'élément HTML cliqué pour faire Suivant/Précédent
+        if (window.event && window.event.currentTarget) {
+            currentPlayingElement = window.event.currentTarget;
+            currentPlayingElement.classList.add('playing');
+            // Mettre l'icône cliquée en "pause"
+            const icon = currentPlayingElement.querySelector('.fa-play');
+            if (icon) icon.className = 'fas fa-pause';
+        }
+
+        currentSongId = songId;
+        hasCountedPlay = false; 
+        
+        // --- CORRECTION DU BUG DJANGO (Range Requests) ---
+        // Le serveur de développement Django gère mal les requêtes de saut dans le temps.
+        // On télécharge la musique en mémoire (Blob) pour que le navigateur puisse naviguer librement.
+        if (currentObjectUrl) {
+            URL.revokeObjectURL(currentObjectUrl);
+        }
+        
+        // Mettre en pause et réinitialiser avant de charger
+        audio.pause();
+        audio.src = '';
+        
+        fetch(src)
+            .then(response => response.blob())
+            .then(blob => {
+                currentObjectUrl = URL.createObjectURL(blob);
+                audio.src = currentObjectUrl;
+                audio.play().catch(e => console.log('Autoplay empêché', e));
+                isPlaying = true;
+                playIcon.className = 'fas fa-pause';
+            })
+            .catch(err => {
+                console.error('Erreur de chargement', err);
+                // Fallback classique
+                audio.src = src;
+                audio.play();
+                isPlaying = true;
+                playIcon.className = 'fas fa-pause';
+            });
+        
+        document.getElementById('player-title').textContent = title;
+        document.getElementById('player-artist').textContent = artist;
+        
+        // Mettre à jour la cover
+        const thumb = document.getElementById('player-thumb');
+        if (coverUrl) {
+            thumb.innerHTML = `<img src="${coverUrl}" style="width:100%; height:100%; object-fit:cover;">`;
+            thumb.style.background = 'none';
+        } else {
+            thumb.innerHTML = '<i class="fas fa-music" style="color: #b3b3b3;"></i>';
+            thumb.style.background = '#333';
+        }
+        
+        // Bouton like
+        if (songId) {
+            likeBtn.style.display = 'block';
+            heartIcon.className = 'far fa-heart';
+            heartIcon.style.color = 'var(--spotify-muted)';
+        } else {
+            likeBtn.style.display = 'none';
+        }
+    }
+
+    // Boutons Aléatoire et Répétition
+    let isShuffle = false;
+    let isRepeat = false;
+
+    function toggleShuffle() {
+        isShuffle = !isShuffle;
+        const btn = document.getElementById('shuffle-btn');
+        btn.style.color = isShuffle ? 'var(--spotify-green)' : 'var(--spotify-muted)';
+    }
+
+    function toggleRepeat() {
+        isRepeat = !isRepeat;
+        const btn = document.getElementById('repeat-btn');
+        btn.style.color = isRepeat ? 'var(--spotify-green)' : 'var(--spotify-muted)';
+    }
+
+    function getPlayableElements() {
+        return Array.from(document.querySelectorAll('[onclick^="playSong"]'));
+    }
+
+    // Bouton Suivant (trouve l'élément suivant dans la liste)
+    function playNext() {
+        const elements = getPlayableElements();
+        if (elements.length === 0) return;
+
+        if (isShuffle) {
+            const randomIndex = Math.floor(Math.random() * elements.length);
+            elements[randomIndex].click();
+            return;
+        }
+
+        let currentIndex = elements.indexOf(currentPlayingElement);
+        if (currentIndex === -1 || currentIndex === elements.length - 1) {
+            elements[0].click(); // Boucle au début
+        } else {
+            elements[currentIndex + 1].click();
+        }
+    }
+
+    // Bouton Précédent (trouve l'élément précédent dans la liste)
+    function playPrev() {
+        // Si la musique a dépassé 3 secondes, revenir au début de la musique actuelle
+        if (audio.currentTime > 3) {
+            audio.currentTime = 0;
+            return;
+        }
+
+        const elements = getPlayableElements();
+        if (elements.length === 0) return;
+        
+        let currentIndex = elements.indexOf(currentPlayingElement);
+        if (currentIndex <= 0) {
+            elements[elements.length - 1].click(); // Boucle à la fin
+        } else {
+            elements[currentIndex - 1].click();
+        }
+    }
+
+    // Passage auto à la chanson suivante quand terminée
+    audio.addEventListener('ended', function() {
+        if (isRepeat) {
+            audio.currentTime = 0;
+            audio.play();
+        } else {
+            playNext();
+        }
+    });
+
+    // Toggle le like pour la chanson en cours de lecture
+    function toggleCurrentSongLike() {
+        if (!currentSongId) return;
+        toggleLike(currentSongId, likeBtn);
+    }
+
+    // Toggle Like générique (appelable depuis n'importe quel bouton)
+    function toggleLike(songId, buttonElement) {
+        {% if not user.is_authenticated %}
+            alert('Tu dois être connecté pour liker un titre.');
+            window.location.href = '{% url "users:login" %}';
+            return;
+        {% endif %}
+
+        // Récupérer le token CSRF au moment du clic (évite les erreurs 403)
+        const currentToken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+        fetch(`/player/like/${songId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': currentToken,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                // Trouver l'icône à l'intérieur du bouton cliqué
+                const icon = buttonElement.querySelector('i') || buttonElement;
+                if (data.is_liked) {
+                    icon.className = 'fas fa-heart';
+                    icon.style.color = '#e91e63';
+                } else {
+                    icon.className = 'far fa-heart';
+                    icon.style.color = 'var(--spotify-muted)';
+                    // Si on est sur la page Liked Songs, recharger la page ou cacher l'élément
+                    if (window.location.pathname.includes('liked-songs')) {
+                        window.location.reload();
+                    }
+                }
+                
+                // Synchroniser avec le player principal si c'est la même chanson
+                if (currentSongId === songId && buttonElement !== likeBtn) {
+                    if (data.is_liked) {
+                        heartIcon.className = 'fas fa-heart';
+                        heartIcon.style.color = '#e91e63';
+                    } else {
+                        heartIcon.className = 'far fa-heart';
+                        heartIcon.style.color = 'var(--spotify-muted)';
+                    }
+                }
+            }
+        });
+    }
+
+    // Mise à jour de la progression et enregistrement de l'écoute
+    audio.addEventListener('timeupdate', function() {
+        // Ne pas mettre à jour l'UI automatiquement si l'utilisateur est en train de glisser la barre
+        if (audio.duration && !isDraggingProgress) {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+            document.getElementById('current-time').textContent = formatTime(audio.currentTime);
+            document.getElementById('total-time').textContent = formatTime(audio.duration);
+            
+            // Si on a écouté plus de 15% (ou 10 secondes), on compte l'écoute
+            if (!hasCountedPlay && currentSongId && (progress > 15 || audio.currentTime > 10)) {
+                recordPlay(currentSongId);
+                hasCountedPlay = true;
+            }
+        }
+    });
+
+    function recordPlay(songId) {
+        const currentToken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        fetch(`/player/record/${songId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': currentToken,
+                'Content-Type': 'application/json'
+            }
+        }).catch(e => console.log('Erreur record play', e));
+    }
+
+    // --- GESTION DU DRAG (SCRUBBING) PROGRESSION ET VOLUME ---
+    
+    const progressBarContainer = document.querySelector('.progress-bar-container');
+    let isDraggingProgress = false;
+    let isDraggingVolume = false;
+
+    // Fonction utilitaire pour calculer le pourcentage selon la position de la souris
+    function getPercent(e, container) {
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        return Math.max(0, Math.min(1, x / rect.width));
+    }
+
+    // Mise à jour visuelle de la barre de progression
+    function updateProgressUI(percent) {
+        if (audio.duration) {
+            document.getElementById('progress-fill').style.width = (percent * 100) + '%';
+            document.getElementById('current-time').textContent = formatTime(percent * audio.duration);
+        }
+    }
+
+    // Événements Mousedown (Quand on clique sur la barre)
+    if (progressBarContainer) {
+        progressBarContainer.addEventListener('mousedown', function(e) {
+            isDraggingProgress = true;
+            updateProgressUI(getPercent(e, progressBarContainer));
+        });
+    }
+
+    if (volumeContainer) {
+        volumeContainer.addEventListener('mousedown', function(e) {
+            isDraggingVolume = true;
+            const p = getPercent(e, volumeContainer);
+            audio.volume = p;
+            updateVolumeUI(p);
+        });
+    }
+
+    // Glissement (Quand on bouge la souris n'importe où sur l'écran en maintenant le clic)
+    document.addEventListener('mousemove', function(e) {
+        if (isDraggingProgress) {
+            updateProgressUI(getPercent(e, progressBarContainer));
+        }
+        if (isDraggingVolume) {
+            const p = getPercent(e, volumeContainer);
+            audio.volume = p;
+            updateVolumeUI(p);
+        }
+    });
+
+    // Relâchement (Quand on lâche le clic)
+    document.addEventListener('mouseup', function(e) {
+        if (isDraggingProgress) {
+            isDraggingProgress = false;
+            // C'est seulement maintenant qu'on modifie vraiment l'audio !
+            if (audio.duration) {
+                const p = getPercent(e, progressBarContainer);
+                audio.currentTime = p * audio.duration;
+            }
+        }
+        if (isDraggingVolume) {
+            isDraggingVolume = false;
+        }
+    });
+
+    function updateVolumeUI(percent) {
+        if (volumeFill) volumeFill.style.width = (percent * 100) + '%';
+        if (percent === 0) volumeIcon.className = 'fas fa-volume-mute';
+        else if (percent < 0.5) volumeIcon.className = 'fas fa-volume-down';
+        else volumeIcon.className = 'fas fa-volume-up';
+    }
+
+    function toggleMute() {
+        if (audio.volume > 0) {
+            lastVolume = audio.volume;
+            audio.volume = 0;
+            updateVolumeUI(0);
+        } else {
+            audio.volume = lastVolume > 0 ? lastVolume : 1;
+            updateVolumeUI(audio.volume);
+        }
+    }
+
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    // Auto-fermeture des messages Django
+    setTimeout(function() {
+        const msgs = document.querySelectorAll('.django-message');
+        msgs.forEach(m => m.style.display = 'none');
+    }, 4000);
+
+    // Fermer les suggestions de recherche si on clique en dehors
+    document.addEventListener('click', function(e) {
+        const searchContainer = document.querySelector('.topbar-search');
+        if (searchContainer && !searchContainer.contains(e.target)) {
+            const suggestions = document.getElementById('search-suggestions-container');
+            if (suggestions) suggestions.innerHTML = '';
+        }
+    });
+</script>
+
+<!-- PWA Service Worker Registration -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/serviceworker.js').then(function(registration) {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            }, function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+    }
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

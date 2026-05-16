@@ -1,0 +1,105 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Sosie Spotify - Accueil{% endblock %}
+
+{% block content %}
+
+<!-- Filter Pills -->
+<div class="filter-pills" style="margin-top: 20px;">
+    <a href="#" class="filter-pill active">Tout</a>
+    <a href="/music/" class="filter-pill">Musique</a>
+    <a href="#" class="filter-pill">Podcasts</a>
+</div>
+
+<!-- Hero Section -->
+<div style="padding: 10px 0 20px 0;">
+    <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 8px;">
+        Bonjour
+    </h1>
+</div>
+
+<!-- Accès rapide (Spotify Style Quick Cards) -->
+<div class="quick-grid">
+    <a href="{% if user.is_authenticated %}{% url 'player:liked_songs' %}{% else %}{% url 'users:login' %}{% endif %}" class="quick-card">
+        <div class="quick-card-icon" style="background: linear-gradient(135deg, #450af5, #c4efd9);">
+            <i class="fas fa-heart" style="color: white; font-size: 1.2rem;"></i>
+        </div>
+        <div class="quick-card-title">Titres likés</div>
+        <div class="play-btn"><i class="fas fa-play"></i></div>
+    </a>
+    <a href="{% url 'music:music_list' %}" class="quick-card">
+        <div class="quick-card-icon" style="background: #1e3a5f;">
+            <i class="fas fa-music" style="color: white;"></i>
+        </div>
+        <div class="quick-card-title">Catalogue Musical</div>
+        <div class="play-btn"><i class="fas fa-play"></i></div>
+    </a>
+    <a href="{% url 'music:artiste_list' %}" class="quick-card">
+        <div class="quick-card-icon" style="background: #3b1f5e;">
+            <i class="fas fa-microphone" style="color: white;"></i>
+        </div>
+        <div class="quick-card-title">Artistes</div>
+        <div class="play-btn"><i class="fas fa-play"></i></div>
+    </a>
+    <a href="{% url 'music:album_list' %}" class="quick-card">
+        <div class="quick-card-icon" style="background: #1e4a3b;">
+            <i class="fas fa-compact-disc" style="color: white;"></i>
+        </div>
+        <div class="quick-card-title">Albums</div>
+        <div class="play-btn"><i class="fas fa-play"></i></div>
+    </a>
+    <a href="{% url 'playlists:playlist_list' %}" class="quick-card">
+        <div class="quick-card-icon" style="background: #4a2f1e;">
+            <i class="fas fa-list-music" style="color: white;"></i>
+        </div>
+        <div class="quick-card-title">Playlists</div>
+        <div class="play-btn"><i class="fas fa-play"></i></div>
+    </a>
+    <!-- Exemple d'une chanson en accès rapide -->
+    {% if top_songs %}
+        {% with song=top_songs.0 %}
+        <div class="quick-card" onclick="playSong('{% if song.fichier_audio %}{{ song.fichier_audio.url }}{% endif %}', '{{ song.titre|escapejs }}', '{{ song.artiste.nom|escapejs }}', {{ song.id }}, '{% if song.album and song.album.pochette %}{{ song.album.pochette.url }}{% endif %}')">
+            {% if song.album and song.album.pochette %}
+                <img src="{{ song.album.pochette.url }}" alt="{{ song.titre }}">
+            {% else %}
+                <div class="quick-card-icon" style="background: #282828;"><i class="fas fa-music" style="color: #b3b3b3;"></i></div>
+            {% endif %}
+            <div class="quick-card-title">{{ song.titre }}</div>
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+        </div>
+        {% endwith %}
+    {% endif %}
+</div>
+
+<!-- Section récente -->
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; margin-top: 40px;">
+    <h2 style="font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--spotify-text);">Titres populaires</h2>
+    <a href="{% url 'music:music_list' %}" style="color: var(--spotify-muted); font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: color 0.2s;">Tout afficher</a>
+</div>
+
+<div class="music-grid">
+    {% for song in top_songs %}
+    <div class="music-card" onclick="playSong('{% if song.fichier_audio %}{{ song.fichier_audio.url }}{% endif %}', '{{ song.titre|escapejs }}', '{{ song.artiste.nom|escapejs }}', {{ song.id }}, '{% if song.album and song.album.pochette %}{{ song.album.pochette.url }}{% endif %}')">
+        {% if song.album and song.album.pochette %}
+        <img src="{{ song.album.pochette.url }}"
+             alt="{{ song.titre }}"
+             class="music-card-img"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="music-card-img-placeholder" style="display:none;"><i class="fas fa-music"></i></div>
+        {% else %}
+        <div class="music-card-img-placeholder"><i class="fas fa-music"></i></div>
+        {% endif %}
+
+        <div class="music-card-title">{{ song.titre }}</div>
+        <div class="music-card-subtitle">{{ song.artiste.nom }}</div>
+        {% if song.genre %}
+        <div class="badge-genre">{{ song.genre.nom }}</div>
+        {% endif %}
+        <div class="play-btn"><i class="fas fa-play"></i></div>
+    </div>
+    {% empty %}
+    <p style="color: var(--spotify-muted); padding: 20px;">Aucune musique populaire disponible.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

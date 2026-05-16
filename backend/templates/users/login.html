@@ -1,0 +1,92 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Connexion — Sosie Spotify{% endblock %}
+
+{% block content %}
+<div style="min-height: 70vh; display: flex; align-items: center; justify-content: center;">
+    <div style="width: 100%; max-width: 420px;">
+
+        <!-- Logo -->
+        <div style="text-align: center; margin-bottom: 32px;">
+            <div style="font-size: 3rem; color: var(--spotify-green); margin-bottom: 12px;">
+                <i class="fa-brands fa-spotify"></i>
+            </div>
+            <h1 style="font-size: 1.8rem; font-weight: 800; margin: 0 0 6px 0;">Connexion</h1>
+            <p style="color: var(--spotify-muted); font-size: 0.9rem;">Connecte-toi pour accéder à ta musique</p>
+        </div>
+
+        <!-- Formulaire -->
+        <form method="post" style="background: #1a1a1a; border-radius: 16px; padding: 32px; display: flex; flex-direction: column; gap: 16px;">
+            {% csrf_token %}
+
+            <!-- Username -->
+            <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--spotify-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                    Nom d'utilisateur
+                </label>
+                <input type="text" name="username" value="{{ username|default:'' }}" required autofocus
+                       placeholder="Ton nom d'utilisateur"
+                       style="width: 100%; box-sizing: border-box; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 8px;
+                              padding: 12px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.2s;"
+                       onfocus="this.style.borderColor='var(--spotify-green)'"
+                       onblur="this.style.borderColor='#3a3a3a'">
+            </div>
+
+            <!-- Password -->
+            <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--spotify-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                    Mot de passe
+                </label>
+                <div style="position: relative;">
+                    <input type="password" name="password" id="password-input" required
+                           placeholder="Ton mot de passe"
+                           style="width: 100%; box-sizing: border-box; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 8px;
+                                  padding: 12px 48px 12px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.2s;"
+                           onfocus="this.style.borderColor='var(--spotify-green)'"
+                           onblur="this.style.borderColor='#3a3a3a'">
+                    <button type="button" onclick="togglePassword()"
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--spotify-muted); cursor: pointer; font-size: 1rem;">
+                        <i class="fas fa-eye" id="eye-icon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit"
+                    style="width: 100%; padding: 14px; background: var(--spotify-green); color: #000; border: none;
+                           border-radius: 50px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px;
+                           transition: transform 0.1s, background 0.2s;"
+                    onmouseover="this.style.transform='scale(1.02)'; this.style.background='#1ed760';"
+                    onmouseout="this.style.transform='scale(1)'; this.style.background='var(--spotify-green)';">
+                Se connecter
+            </button>
+        </form>
+
+        <!-- Lien inscription -->
+        <p style="text-align: center; margin-top: 20px; color: var(--spotify-muted); font-size: 0.9rem;">
+            Pas encore de compte ?
+            <a href="{% url 'users:register' %}" style="color: #fff; font-weight: 600; text-decoration: none;"
+               onmouseover="this.style.color='var(--spotify-green)'" onmouseout="this.style.color='#fff'">
+                S'inscrire
+            </a>
+        </p>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function togglePassword() {
+    const input = document.getElementById('password-input');
+    const icon  = document.getElementById('eye-icon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+</script>
+{% endblock %}
+
+{% endblock %}

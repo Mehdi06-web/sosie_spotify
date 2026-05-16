@@ -1,0 +1,169 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ playlist.nom }} — Sosie Spotify{% endblock %}
+
+{% block content %}
+
+<!-- Header playlist -->
+<div style="display: flex; gap: 32px; align-items: flex-end; margin-bottom: 40px; flex-wrap: wrap;
+            background: linear-gradient(180deg, #3b1f5e 0%, transparent 100%); padding: 32px; border-radius: 16px;">
+
+    <!-- Image -->
+    <div style="width: 200px; height: 200px; border-radius: 8px; background: linear-gradient(135deg, #3b1f5e 0%, #1a0a30 100%);
+                display: flex; align-items: center; justify-content: center; font-size: 5rem; flex-shrink: 0;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+        {% if playlist.pochette %}
+        <img src="{{ playlist.pochette.url }}" style="width:200px; height:200px; object-fit:cover; border-radius:8px;">
+        {% else %}
+        <i class="fas fa-list" style="color: #b3b3b3;"></i>
+        {% endif %}
+    </div>
+
+    <!-- Infos -->
+    <div style="flex: 1; min-width: 200px;">
+        <div style="color: var(--spotify-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+            Playlist {% if not playlist.est_publique %}<i class="fas fa-lock" style="margin-left: 6px;"></i>{% endif %}
+        </div>
+        <h1 style="font-size: 2.8rem; font-weight: 800; margin: 0 0 12px 0; line-height: 1.1;">{{ playlist.nom }}</h1>
+        {% if playlist.description %}
+        <p style="color: var(--spotify-muted); margin: 0 0 12px 0; max-width: 500px;">{{ playlist.description }}</p>
+        {% endif %}
+        <p style="color: var(--spotify-muted); font-size: 0.9rem; margin: 0;">
+            Par <strong style="color: #fff;">{{ playlist.utilisateur.username }}</strong>
+            · {{ playlist.nb_chansons }} titre{{ playlist.nb_chansons|pluralize }}
+            · {{ playlist.date_creation|date:"d F Y" }}
+        </p>
+
+        <!-- Actions propriétaire -->
+        {% if user == playlist.utilisateur %}
+        <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+            <form method="post" action="{% url 'playlists:playlist_delete' playlist.pk %}"
+                  onsubmit="return confirm('Supprimer définitivement « {{ playlist.nom }} » ?')">
+                {% csrf_token %}
+                <button type="submit"
+                        style="padding: 8px 18px; background: transparent; color: #e74c3c; border: 1px solid #e74c3c;
+                               border-radius: 50px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+                        onmouseover="this.style.background='#e74c3c'; this.style.color='#fff';"
+                        onmouseout="this.style.background='transparent'; this.style.color='#e74c3c';">
+                    <i class="fas fa-trash"></i> Supprimer
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr {% if user == playlist.utilisateur and songs_disponibles %}340px{% endif %}; gap: 32px; align-items: start;">
+
+    <!-- Liste des chansons -->
+    <div>
+        <h2 class="section-title" style="font-size: 1.1rem;"><i class="fas fa-music"></i> Chansons ({{ items|length }})</h2>
+
+        {% if items %}
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+            {% for item in items %}
+            <div style="display: flex; align-items: center; gap: 16px; padding: 10px 14px; border-radius: 8px;
+                        transition: background 0.15s; cursor: pointer;"
+                 onmouseover="this.style.background='#2a2a2a'"
+                 onmouseout="this.style.background='transparent'"
+                 onclick="playSong('{% if item.song.fichier_audio %}{{ item.song.fichier_audio.url }}{% endif %}', '{{ item.song.titre|escapejs }}', '{{ item.song.artiste.nom|escapejs }}', {{ item.song.id }}, '{% if item.song.album and item.song.album.pochette %}{{ item.song.album.pochette.url }}{% endif %}')">
+
+                <!-- Numéro -->
+                <div style="width: 24px; text-align: right; color: var(--spotify-muted); font-size: 0.9rem; flex-shrink: 0;">
+                    {{ forloop.counter }}
+                </div>
+
+                <!-- Icône -->
+                <div style="width: 40px; height: 40px; border-radius: 4px; background: #333; display: flex;
+                            align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.2rem;">
+                    <i class="fas fa-music" style="color: #b3b3b3;"></i>
+                </div>
+
+                <!-- Infos chanson -->
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ item.song.titre }}
+                    </div>
+                    <div style="color: var(--spotify-muted); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ item.song.artiste.nom }}
+                        {% if item.song.album %} · {{ item.song.album.titre }}{% endif %}
+                    </div>
+                </div>
+
+                <!-- Genre -->
+                {% if item.song.genre %}
+                <span class="badge-genre" style="flex-shrink: 0; font-size: 0.72rem;">{{ item.song.genre.nom }}</span>
+                {% endif %}
+
+                <!-- Durée -->
+                <div style="color: var(--spotify-muted); font-size: 0.85rem; flex-shrink: 0; min-width: 36px; text-align: right;">
+                    {{ item.song.get_duree_formatee }}
+                </div>
+
+                <!-- Supprimer (propriétaire) -->
+                {% if user == playlist.utilisateur %}
+                <form method="post" action="{% url 'playlists:playlist_remove_song' playlist.pk item.pk %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit"
+                            style="background: none; border: none; color: var(--spotify-muted); cursor: pointer; padding: 4px 8px;
+                                   border-radius: 4px; font-size: 0.9rem; transition: color 0.2s;"
+                            onclick="event.stopPropagation()"
+                            onmouseover="this.style.color='#e74c3c'" onmouseout="this.style.color='var(--spotify-muted)'">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 40px; color: var(--spotify-muted);">
+            <i class="fas fa-music" style="font-size: 2.5rem; margin-bottom: 12px; display: block;"></i>
+            <p>Cette playlist est vide.</p>
+            {% if user == playlist.utilisateur %}
+            <p style="font-size: 0.85rem; margin-top: 6px;">Ajoute des chansons depuis le panneau à droite.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Panneau ajout chanson (propriétaire uniquement) -->
+    {% if user == playlist.utilisateur and songs_disponibles is not None %}
+    <div style="background: #1a1a1a; border-radius: 12px; padding: 20px; position: sticky; top: 20px;">
+        <h3 style="font-size: 1rem; font-weight: 700; margin: 0 0 16px 0;">
+            <i class="fas fa-plus-circle" style="color: var(--spotify-green); margin-right: 8px;"></i>
+            Ajouter une chanson
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow-y: auto;">
+            {% for song in songs_disponibles %}
+            <form method="post" action="{% url 'playlists:playlist_add_song' playlist.pk %}" style="margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="song_id" value="{{ song.pk }}">
+                <button type="submit"
+                        style="width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+                               background: transparent; border: none; border-radius: 8px; cursor: pointer;
+                               color: #fff; text-align: left; transition: background 0.15s;"
+                        onmouseover="this.style.background='#2a2a2a'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.2rem;"><i class="fas fa-music" style="color: #b3b3b3;"></i></span>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ song.titre }}
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--spotify-muted);">{{ song.artiste.nom }}</div>
+                    </div>
+                    <i class="fas fa-plus" style="color: var(--spotify-green); flex-shrink: 0; font-size: 0.8rem;"></i>
+                </button>
+            </form>
+            {% empty %}
+            <p style="color: var(--spotify-muted); font-size: 0.85rem; text-align: center; padding: 20px;">
+                Toutes les chansons sont déjà dans la playlist !
+            </p>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Sosie Spotify - {{ titre }}{% endblock %}
+
+{% block content %}
+
+<div style="padding: 20px 0 10px 0;">
+    <h1 class="section-title">
+        <i class="fas fa-music" style="color: var(--spotify-green);"></i>
+        {{ titre }}
+    </h1>
+    <p style="color: var(--spotify-muted); margin-bottom: 20px;">
+        {{ songs|length }} titre{{ songs|length|pluralize }} disponible{{ songs|length|pluralize }}
+    </p>
+</div>
+
+<!-- Barre de recherche + filtres -->
+<form id="filter-form" method="get" 
+      hx-get="{% url 'music:music_list' %}"
+      hx-trigger="keyup from:input[name='q'] delay:300ms, submit"
+      hx-target="#music-grid-container"
+      hx-select="#music-grid-container"
+      hx-swap="outerHTML"
+      style="display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap;">
+    <input
+        type="text"
+        name="q"
+        value="{{ search }}"
+        autocomplete="off"
+        placeholder="🔍 Rechercher un titre ou artiste..."
+        style="flex: 1; min-width: 200px; background: #2a2a2a; border: 1px solid #444; border-radius: 24px; padding: 10px 18px; color: #fff; font-size: 0.9rem; outline: none;"
+    >
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+        <a href="{% url 'music:music_list' %}"
+           style="padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; text-decoration: none;
+                  {% if not genre_actif %}background: var(--spotify-green); color: #000;{% else %}background: #333; color: #fff;{% endif %}">
+            Tous
+        </a>
+        {% for genre in genres %}
+        <a href="?genre={{ genre.id }}"
+           style="padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; text-decoration: none;
+                  {% if genre_actif == genre.id|stringformat:'s' %}background: var(--spotify-green); color: #000;{% else %}background: #333; color: #fff;{% endif %}">
+            {{ genre.nom }}
+        </a>
+        {% endfor %}
+    </div>
+</form>
+
+<div id="music-grid-container">
+    <!-- Grille de musiques -->
+    <div class="music-grid">
+        {% for song in songs %}
+        <div class="music-card" onclick="playSong('{% if song.fichier_audio %}{{ song.fichier_audio.url }}{% endif %}', '{{ song.titre|escapejs }}', '{{ song.artiste.nom|escapejs }}', {{ song.id }}, '{% if song.album and song.album.pochette %}{{ song.album.pochette.url }}{% endif %}')">
+            {% if song.album and song.album.pochette %}
+            <img src="{{ song.album.pochette.url }}"
+                 alt="{{ song.titre }}"
+                 class="music-card-img"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="music-card-img-placeholder" style="display:none;"><i class="fas fa-music"></i></div>
+            {% else %}
+            <div class="music-card-img-placeholder"><i class="fas fa-music"></i></div>
+            {% endif %}
+
+            <div class="music-card-title">{{ song.titre }}</div>
+            <div class="music-card-subtitle">{{ song.artiste.nom }}</div>
+            {% if song.album %}
+            <div class="music-card-subtitle" style="margin-top: 2px; font-size: 0.75rem;">{{ song.album.titre }}</div>
+            {% endif %}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                {% if song.genre %}<span class="badge-genre">{{ song.genre.nom }}</span>{% else %}<span></span>{% endif %}
+                <span style="color: var(--spotify-muted); font-size: 0.75rem;">{{ song.get_duree_formatee }}</span>
+            </div>
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+        </div>
+        {% empty %}
+        <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--spotify-muted);">
+            <i class="fas fa-music" style="font-size: 3rem; margin-bottom: 16px; display: block;"></i>
+            <p>Aucune musique trouvée.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div style="display: flex; justify-content: center; gap: 8px; margin-top: 40px;">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if genre_actif %}&genre={{ genre_actif }}{% endif %}"
+           style="padding: 8px 16px; background: #333; color: #fff; border-radius: 8px; text-decoration: none;">← Précédent</a>
+        {% endif %}
+        <span style="padding: 8px 16px; background: var(--spotify-green); color: #000; border-radius: 8px; font-weight: 700;">
+            Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if genre_actif %}&genre={{ genre_actif }}{% endif %}"
+           style="padding: 8px 16px; background: #333; color: #fff; border-radius: 8px; text-decoration: none;">Suivant →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

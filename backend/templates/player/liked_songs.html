@@ -1,0 +1,114 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Titres Likés — Sosie Spotify{% endblock %}
+
+{% block content %}
+
+<!-- Header Liked Songs -->
+<div style="display: flex; gap: 32px; align-items: flex-end; margin-bottom: 40px; flex-wrap: wrap;
+            background: linear-gradient(180deg, #4b145b 0%, transparent 100%); padding: 32px; border-radius: 16px;">
+
+    <!-- Image (Heart) -->
+    <div style="width: 200px; height: 200px; border-radius: 8px; background: linear-gradient(135deg, #e91e63 0%, #5c0b27 100%);
+                display: flex; align-items: center; justify-content: center; font-size: 5rem; flex-shrink: 0;
+                box-shadow: 0 8px 32px rgba(233,30,99,0.4);">
+        <i class="fas fa-heart" style="color: #fff;"></i>
+    </div>
+
+    <!-- Infos -->
+    <div style="flex: 1; min-width: 200px;">
+        <div style="color: #fff; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 700;">
+            Playlist
+        </div>
+        <h1 style="font-size: 3.5rem; font-weight: 800; margin: 0 0 12px 0; line-height: 1.1;">Titres likés</h1>
+        <p style="color: #fff; font-size: 0.95rem; margin: 0; font-weight: 600;">
+            <i class="fas fa-user-circle" style="margin-right: 6px;"></i>{{ user.username }}
+            · <span style="color: rgba(255,255,255,0.7); font-weight: 400;">{{ liked_songs|length }} titre{{ liked_songs|length|pluralize }}</span>
+        </p>
+
+        <!-- Action globale -->
+        {% if liked_songs %}
+        <div style="margin-top: 24px;">
+            <button onclick="playSong('{% if liked_songs.0.song.fichier_audio %}{{ liked_songs.0.song.fichier_audio.url }}{% endif %}', '{{ liked_songs.0.song.titre }}', '{{ liked_songs.0.song.artiste.nom }}', {{ liked_songs.0.song.id }})"
+                    style="width: 56px; height: 56px; border-radius: 50%; background: var(--spotify-green); border: none;
+                           color: #000; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+                           transition: transform 0.1s, background 0.2s; box-shadow: 0 8px 16px rgba(0,0,0,0.3);"
+                    onmouseover="this.style.transform='scale(1.05)'; this.style.background='#1ed760';"
+                    onmouseout="this.style.transform='scale(1)'; this.style.background='var(--spotify-green)';">
+                <i class="fas fa-play" style="margin-left: 4px;"></i>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Liste des chansons likées -->
+<div>
+    {% if liked_songs %}
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+        {% for like in liked_songs %}
+        <div style="display: flex; align-items: center; gap: 16px; padding: 10px 14px; border-radius: 8px;
+                    transition: background 0.15s; cursor: pointer;"
+             onmouseover="this.style.background='#2a2a2a'"
+             onmouseout="this.style.background='transparent'"
+             onclick="playSong('{% if like.song.fichier_audio %}{{ like.song.fichier_audio.url }}{% endif %}', '{{ like.song.titre }}', '{{ like.song.artiste.nom }}', {{ like.song.id }})">
+
+            <!-- Numéro -->
+            <div style="width: 24px; text-align: right; color: var(--spotify-muted); font-size: 0.9rem; flex-shrink: 0;">
+                {{ forloop.counter }}
+            </div>
+
+            <!-- Pochette ou Icône -->
+            <div style="width: 40px; height: 40px; border-radius: 4px; background: #333; display: flex;
+                        align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.2rem; overflow: hidden;">
+                {% if like.song.album and like.song.album.pochette %}
+                <img src="{{ like.song.album.pochette.url }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                <i class="fas fa-music" style="color: #b3b3b3;"></i>
+                {% endif %}
+            </div>
+
+            <!-- Infos chanson -->
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--spotify-green);">
+                    {{ like.song.titre }}
+                </div>
+                <div style="color: var(--spotify-muted); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ like.song.artiste.nom }}
+                    {% if like.song.album %} · {{ like.song.album.titre }}{% endif %}
+                </div>
+            </div>
+
+            <!-- Date d'ajout -->
+            <div style="color: var(--spotify-muted); font-size: 0.85rem; flex-shrink: 0; width: 120px; text-align: left;">
+                {{ like.date_ajout|date:"d M Y" }}
+            </div>
+
+            <!-- Action Like (Toggle via JS) -->
+            <button onclick="event.stopPropagation(); toggleLike({{ like.song.id }}, this)"
+                    style="background: none; border: none; color: #e91e63; cursor: pointer; padding: 4px 8px; font-size: 1.1rem;">
+                <i class="fas fa-heart"></i>
+            </button>
+
+            <!-- Durée -->
+            <div style="color: var(--spotify-muted); font-size: 0.85rem; flex-shrink: 0; min-width: 40px; text-align: right;">
+                {{ like.song.get_duree_formatee }}
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 60px; color: var(--spotify-muted);">
+        <i class="fas fa-heart-broken" style="font-size: 3rem; margin-bottom: 16px; display: block; color: rgba(233,30,99,0.3);"></i>
+        <p>Tu n'as pas encore liké de titres.</p>
+        <a href="{% url 'music:music_list' %}"
+           style="display: inline-block; margin-top: 16px; padding: 10px 24px; background: #fff;
+                  color: #000; border-radius: 50px; font-weight: 700; text-decoration: none;">
+            Découvrir de la musique
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
