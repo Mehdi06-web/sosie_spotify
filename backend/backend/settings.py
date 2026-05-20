@@ -87,25 +87,25 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 #     }
 # }
 
-# SQLite (développement - par défaut)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-# MySQL - Sosie Spotify (activer quand MySQL 8.0+ disponible)
+# SQLite (développement - laissé en commentaire si on utilise MySQL)
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'dbspotify',
-#         'USER': 'root',
-#         'PASSWORD': '',
-#         'HOST': 'localhost',
-#         'PORT': '3306',
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
+# MySQL - Sosie Spotify (utilisée en développement si MySQL est disponible)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'dbspotify',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': '127.0.0.1',
+        'PORT': '3307',
+    }
+}
 
 
 # Password validation

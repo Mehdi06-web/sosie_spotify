@@ -11,6 +11,9 @@
         {% if song.album and song.album.pochette %}
         <img src="{{ song.album.pochette.url }}" alt="{{ song.titre }}"
              style="width: 100%; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+        {% elif song.pochette %}
+        <img src="{{ song.pochette.url }}" alt="{{ song.titre }}"
+             style="width: 100%; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
         {% else %}
         <div style="width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #1db954 0%, #191414 100%);
                     border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 5rem;
@@ -18,7 +21,7 @@
         {% endif %}
 
         <!-- Bouton play rapide -->
-        <button onclick="playSong('{% if song.fichier_audio %}{{ song.fichier_audio.url }}{% endif %}', '{{ song.titre|escapejs }}', '{{ song.artiste.nom|escapejs }}', {{ song.id }}, '{% if song.album and song.album.pochette %}{{ song.album.pochette.url }}{% endif %}')"
+        <button onclick="playSong('{% if song.fichier_audio %}{{ song.fichier_audio.url }}{% endif %}', '{{ song.titre|escapejs }}', '{{ song.artiste.nom|escapejs }}', {{ song.id }}, '{% if song.album and song.album.pochette %}{{ song.album.pochette.url }}{% elif song.pochette %}{{ song.pochette.url }}{% endif %}')"
                 style="width: 100%; margin-top: 16px; padding: 14px; background: var(--spotify-green); color: #000;
                        border: none; border-radius: 50px; font-size: 1rem; font-weight: 700; cursor: pointer;
                        display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.1s;"

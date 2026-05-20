@@ -50,9 +50,15 @@
     <!-- Grille de musiques -->
     <div class="music-grid">
         {% for song in songs %}
-        <div class="music-card" onclick="playSong('{% if song.fichier_audio %}{{ song.fichier_audio.url }}{% endif %}', '{{ song.titre|escapejs }}', '{{ song.artiste.nom|escapejs }}', {{ song.id }}, '{% if song.album and song.album.pochette %}{{ song.album.pochette.url }}{% endif %}')">
+        <div class="music-card" onclick="playSong('{% if song.fichier_audio %}{{ song.fichier_audio.url }}{% endif %}', '{{ song.titre|escapejs }}', '{{ song.artiste.nom|escapejs }}', {{ song.id }}, '{% if song.album and song.album.pochette %}{{ song.album.pochette.url }}{% elif song.pochette %}{{ song.pochette.url }}{% endif %}')">
             {% if song.album and song.album.pochette %}
             <img src="{{ song.album.pochette.url }}"
+                 alt="{{ song.titre }}"
+                 class="music-card-img"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="music-card-img-placeholder" style="display:none;"><i class="fas fa-music"></i></div>
+            {% elif song.pochette %}
+            <img src="{{ song.pochette.url }}"
                  alt="{{ song.titre }}"
                  class="music-card-img"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">

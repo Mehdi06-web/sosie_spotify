@@ -2,7 +2,9 @@
 Commande Django pour générer de fausses données musicales avec Faker.
 Usage: python manage.py fake_data
 """
+import os
 import random
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from faker import Faker
 from music.models import Genre, Artiste, Album, Song
@@ -64,20 +66,25 @@ class Command(BaseCommand):
         # 3. Créer les albums
         self.stdout.write('  → Création des albums...')
         albums = []
+        cover_files = self._get_cover_files()
         for _ in range(options['albums']):
             album = Album.objects.create(
                 titre=fake.catch_phrase(),
                 artiste=random.choice(artistes),
                 annee_sortie=random.randint(2000, 2024),
             )
+            if cover_files:
+                album.pochette = os.path.join('songs', 'pochettes', random.choice(cover_files))
+                album.save(update_fields=['pochette'])
             albums.append(album)
         self.stdout.write(self.style.SUCCESS(f'    ✅ {len(albums)} albums créés'))
 
         # 4. Créer les chansons
         self.stdout.write('  → Création des chansons...')
-        for _ in range(options['songs']):
+        audio_files = self._get_audio_files()
+        for index in range(options['songs']):
             album = random.choice(albums)
-            Song.objects.create(
+            song = Song.objects.create(
                 titre=fake.catch_phrase(),
                 artiste=album.artiste,
                 album=album,
@@ -85,6 +92,10 @@ class Command(BaseCommand):
                 duree=random.randint(120, 360),
                 nb_ecoutes=random.randint(0, 1000000),
             )
+            if audio_files:
+                audio_filename = audio_files[index % len(audio_files)]
+                song.fichier_audio = os.path.join('songs', audio_filename)
+                song.save(update_fields=['fichier_audio'])
         self.stdout.write(self.style.SUCCESS(f'    ✅ {options["songs"]} chansons créées'))
 
         self.stdout.write('')
@@ -93,3 +104,21 @@ class Command(BaseCommand):
         self.stdout.write(f'   Artistes: {Artiste.objects.count()}')
         self.stdout.write(f'   Albums: {Album.objects.count()}')
         self.stdout.write(f'   Chansons: {Song.objects.count()}')
+
+    def _get_audio_files(self):
+        songs_dir = os.path.join(settings.MEDIA_ROOT, 'songs')
+        if not os.path.isdir(songs_dir):
+            return []
+        return sorted([
+            f for f in os.listdir(songs_dir)
+            if os.path.isfile(os.path.join(songs_dir, f)) and f.lower().endswith(('.mp3', '.m4a', '.wav', '.ogg'))
+        ])
+
+    def _get_cover_files(self):
+        cover_dir = os.path.join(settings.MEDIA_ROOT, 'songs', 'pochettes')
+        if not os.path.isdir(cover_dir):
+            return []
+        return sorted([
+            f for f in os.listdir(cover_dir)
+            if os.path.isfile(os.path.join(cover_dir, f)) and f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))
+        ])
